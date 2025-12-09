@@ -195,10 +195,12 @@ def lab_components(lab_id):
         c.stock_state = stock_state
         c.stock_state_class = stock_class
         c.status_label = stock_state
+
     return render_template(
         "components.html",
         components=components_list,
         selected_lab=lab,
+        selected_category=None,
     )
 
 # ---------- Categories CRUD ---------- #
@@ -284,6 +286,41 @@ def delete_category(category_id):
         flash("Category deleted.", "info")
     return redirect(url_for("categories"))
 
+# ---------- NEW: Components by Category ---------- #
+@app.route("/categories/<int:category_id>/components")
+@login_required
+def category_components(category_id):
+    category = Category.query.get(category_id)
+    if not category:
+        flash("Category not found.", "danger")
+        return redirect(url_for("categories"))
+
+    components_list = Component.query.options(
+        db.joinedload(Component.category),
+        db.joinedload(Component.lab),
+    ).filter_by(category_id=category_id).all()
+
+    # Reuse stock status logic
+    for c in components_list:
+        qty = c.quantity or 0
+        min_stock = c.min_stock_level or 0
+        if qty <= 0:
+            stock_state, stock_class = "Out of Stock", "out"
+        elif qty <= min_stock:
+            stock_state, stock_class = "Low Stock", "low"
+        else:
+            stock_state, stock_class = "In Stock", "instock"
+        c.stock_state = stock_state
+        c.stock_state_class = stock_class
+        c.status_label = stock_state
+
+    return render_template(
+        "components.html",
+        components=components_list,
+        selected_lab=None,
+        selected_category=category,
+    )
+
 # ---------- Components CRUD ---------- #
 @app.route("/components")
 @login_required
@@ -305,10 +342,12 @@ def components():
         c.stock_state = stock_state
         c.stock_state_class = stock_class
         c.status_label = stock_state
+
     return render_template(
         "components.html",
         components=components_list,
         selected_lab=None,
+        selected_category=None,
     )
 
 @app.route("/components/add", methods=["GET", "POST"])
@@ -774,4 +813,3 @@ if __name__ == "__main__":
         port=5000,       # default Flask port
         debug=True       # you can set False in production
     )
-
