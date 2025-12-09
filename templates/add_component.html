@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Add Component{% endblock %}
+{% block page_title %}Add Component{% endblock %}
+
+{% block content %}
+<div class="card-soft">
+    <form method="post" class="row g-3">
+        <div class="col-md-4 col-12">
+            <label class="form-label small">Name</label>
+            <input type="text" name="name" class="form-control" required placeholder="DHT11 Sensor">
+        </div>
+
+        <div class="col-md-4 col-12">
+            <label class="form-label small">Category</label>
+            <select name="category_id" class="form-select" required>
+                <option value="">Select category</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-4 col-12">
+            <label class="form-label small">Lab</label>
+            <select name="lab_id" class="form-select" required>
+                <option value="">Select lab</option>
+                {% for lab in labs %}
+                    <option value="{{ lab.id }}">{{ lab.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3 col-6">
+            <label class="form-label small">Quantity</label>
+            <input type="number" name="quantity" class="form-control" min="0" value="0">
+        </div>
+
+        <div class="col-md-3 col-6">
+            <label class="form-label small">Minimum Stock</label>
+            <input type="number" name="min_stock_level" class="form-control" min="0" value="0">
+        </div>
+
+        <div class="col-md-3 col-6">
+            <label class="form-label small">Unit</label>
+            <input type="text" name="unit" class="form-control" placeholder="pieces / kits">
+        </div>
+
+        <div class="col-md-3 col-6">
+            <label class="form-label small">Component Type</label>
+            <select name="component_type" class="form-select">
+                <option value="">Select type</option>
+                <option value="Microcontroller">Microcontroller</option>
+                <option value="Sensor">Sensor</option>
+                <option value="Actuator">Actuator</option>
+                <option value="Motor">Motor</option>
+                <option value="Basic Electronics">Basic Electronics</option>
+                <option value="Tool">Tool</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label small">Description</label>
+            <textarea name="description" class="form-control" rows="2"
+                      placeholder="Short description of this component"></textarea>
+        </div>
+
+        <div class="col-12 d-flex flex-column flex-md-row justify-content-between gap-2">
+            <a href="{{ url_for('components') }}" class="btn btn-outline-secondary w-100 w-md-auto">
+                Back
+            </a>
+            <button type="submit" class="btn btn-soft-primary w-100 w-md-auto">
+                Save Component
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

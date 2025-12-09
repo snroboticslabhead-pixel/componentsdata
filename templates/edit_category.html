@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Category{% endblock %}
+{% block page_title %}Edit Category{% endblock %}
+
+{% block content %}
+<div class="card-soft">
+    <form method="post" class="row g-3">
+        <div class="col-md-4 col-12">
+            <label class="form-label small">Lab</label>
+            <select name="lab_id" class="form-select" required>
+                <option value="">Select lab</option>
+                {% for lab in labs %}
+                    <option value="{{ lab.id }}"
+                        {% if category.lab_id and lab.id == category.lab_id %}selected{% endif %}>
+                        {{ lab.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-4 col-12">
+            <label class="form-label small">Category Name</label>
+            <input
+                type="text"
+                name="name"
+                class="form-control"
+                value="{{ category.name }}"
+                required
+            >
+        </div>
+
+        <div class="col-md-4 col-12">
+            <label class="form-label small">Description</label>
+            <input
+                type="text"
+                name="description"
+                class="form-control"
+                value="{{ category.description }}"
+            >
+        </div>
+
+        <div class="col-12 d-flex flex-column flex-md-row justify-content-between gap-2">
+            <a href="{{ url_for('categories') }}" class="btn btn-outline-secondary w-100 w-md-auto">
+                Cancel
+            </a>
+            <button type="submit" class="btn btn-soft-primary w-100 w-md-auto">
+                Update Category
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Labs{% endblock %}
+{% block page_title %}Labs{% endblock %}
+
+{% block extra_head %}
+    <style>
+        .lab-card-header {
+            border-radius: 16px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            background: transparent;
+            border: 1px solid #e5e7eb;
+        }
+
+        .lab-card-logo-img {
+            width: 140px;            /* increased size */
+            height: auto;
+            object-fit: contain;
+            display: block;
+        }
+
+        .lab-card-title {
+            color: #111827;
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+
+        .lab-card-subtitle {
+            color: #6b7280;
+            font-size: 0.85rem;
+        }
+
+        .lab-meta {
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+
+        @media (max-width: 575.98px) {
+            .lab-card-header {
+                padding: 0.85rem;
+                gap: 0.75rem;
+            }
+
+            .lab-card-logo-img {
+                width: 115px;       /* increased but still mobile-friendly */
+            }
+
+            .lab-card-title {
+                font-size: 1.02rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+    <div class="stat-label">Manage Labs</div>
+    <button type="button"
+            class="btn btn-soft-primary"
+            id="toggleAddLabFormBtn">
+        Add Lab
+    </button>
+</div>
+
+<div class="card-soft mb-3 d-none" id="addLabFormCard">
+    <form method="post" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small">Lab Name</label>
+            <input type="text" name="name" class="form-control" placeholder="Lab-1" required>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small">Location</label>
+            <input type="text" name="location" class="form-control" placeholder="Floor / Block">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label small">Description</label>
+            <input type="text" name="description" class="form-control" placeholder="Robotics lab description">
+        </div>
+        <div class="col-md-2 text-end">
+            <button type="submit" class="btn btn-soft-primary mt-3 w-100">
+                Save Lab
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="row g-3">
+    {% for lab in labs %}
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card-soft h-100 d-flex flex-column">
+                <div class="lab-card-header">
+                    <img
+                        src="https://i.ibb.co/fzG71QGj/pngtree-free-coloring-pages-space-astronaut-cartoon-pictures-vector-png-image-6790578-removebg-previ.png"
+                        alt="Lab"
+                        class="lab-card-logo-img"
+                    >
+                    <div>
+                        <div class="lab-card-title">
+                            {{ lab.name }}
+                        </div>
+                        <div class="lab-card-subtitle">
+                            {{ lab.location or 'Location not set' }}
+                        </div>
+                    </div>
+                </div>
+
+                {% if lab.description %}
+                    <div class="small text-muted mb-2">
+                        {{ lab.description }}
+                    </div>
+                {% endif %}
+
+                <div class="lab-meta mb-3">
+                    Created:
+                    {% if lab.created_at %}
+                        {{ lab.created_at.strftime('%d %b %Y') }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </div>
+
+                <div class="mt-auto">
+                    <div class="d-flex flex-wrap justify-content-between gap-2">
+                        <a href="{{ url_for('lab_components', lab_id=lab.id) }}"
+                           class="action-btn action-btn-primary flex-grow-1 text-center">
+                            View Components
+                        </a>
+                    </div>
+
+                    <div class="d-flex flex-wrap justify-content-between gap-2 mt-2">
+                        <a href="{{ url_for('edit_lab', lab_id=lab.id) }}"
+                           class="action-btn action-btn-secondary flex-grow-1 text-center">
+                            Edit
+                        </a>
+                        <form method="post"
+                              action="{{ url_for('delete_lab', lab_id=lab.id) }}"
+                              class="flex-grow-1"
+                              onsubmit="return confirm('Delete this lab?');">
+                            <button class="btn btn-soft-danger w-100" type="submit">
+                                Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    {% else %}
+        <div class="col-12">
+            <div class="card-soft">
+                <div class="small text-muted text-center">
+                    No labs added yet. Click "Add Lab" to create one.
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    $(document).ready(function () {
+        const $addCard = $('#addLabFormCard');
+        const $btn = $('#toggleAddLabFormBtn');
+
+        $btn.on('click', function () {
+            const isHidden = $addCard.hasClass('d-none');
+            if (isHidden) {
+                $addCard.removeClass('d-none');
+                $btn.text('Close');
+            } else {
+                $addCard.addClass('d-none');
+                $btn.text('Add Lab');
+            }
+        });
+    });
+</script>
+{% endblock %}

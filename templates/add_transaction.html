@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Add Transaction{% endblock %}
+{% block page_title %}Add Transaction{% endblock %}
+
+{% block extra_head %}
+<style>
+    .form-label.small {
+        color: #6b7280;
+        font-weight: 500;
+    }
+    
+    .view-tx-btn {
+        border-radius: 999px;
+        padding: 0.6rem 1.5rem;
+        font-size: 0.92rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    @media (max-width: 575.98px) {
+        .view-tx-btn {
+            width: 100%;
+            font-size: 0.96rem;
+            padding: 0.7rem 1.6rem;
+        }
+
+        .card-soft {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card-soft mb-3">
+    <div class="stat-label mb-2">New Transaction Details</div>
+    
+    <form method="post" class="row g-3">
+        <div class="col-md-4 col-12">
+            <label class="form-label small">Transaction Type</label>
+            <select name="transaction_type" class="form-select" required id="transactionType">
+                <option value="issue" {% if preselected_type == 'issue' %}selected{% endif %}>
+                    Issue (Give components)
+                </option>
+                <option value="return" {% if preselected_type == 'return' %}selected{% endif %}>
+                    Return (Take components back)
+                </option>
+            </select>
+        </div>
+
+        <div class="col-md-4 col-12">
+            <label class="form-label small">Lab</label>
+            <select name="from_lab_id" class="form-select" required id="labSelect">
+                <option value="">Select lab</option>
+                {% for lab in labs %}
+                    <option value="{{ lab.id }}" 
+                        {% if preselected_lab_id and (lab.id|string) == preselected_lab_id %}selected{% endif %}>
+                        {{ lab.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-4 col-12">
+            <label class="form-label small">Campus</label>
+            <input type="text" name="from_campus" class="form-control" placeholder="e.g., KOS Nizamabad">
+        </div>
+
+        <div class="col-md-6 col-12">
+            <label class="form-label small">Component (filtered by Lab)</label>
+            <select name="component_id" class="form-select" required id="componentSelect">
+                <option value="">Select component</option>
+                {% for c in components %}
+                    <option value="{{ c.id }}" 
+                            data-lab-id="{{ c.lab_id }}"
+                        {% if preselected_component_id and (c.id|string) == preselected_component_id %}selected{% endif %}>
+                        {{ c.name }} ({{ c.quantity }} {{ c.unit }})
+                    </option>
+                {% endfor %}
+            </select>
+            <div class="small text-muted mt-1" style="font-size: 0.75rem;">
+                Only components from the selected lab will be shown here.
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6">
+            <label class="form-label small">
+                {% if preselected_type == 'issue' %}Issued To{% else %}Returned By{% endif %}
+            </label>
+            <input type="text" name="person_name" class="form-control" placeholder="Student / Teacher name" required>
+        </div>
+
+        <div class="col-md-3 col-6">
+            <label class="form-label small">Quantity</label>
+            <input type="number" name="transaction_quantity" class="form-control" min="1" value="1" required>
+        </div>
+
+        <div class="col-md-6 col-12">
+            <label class="form-label small">Purpose</label>
+            <input type="text" name="purpose" class="form-control" placeholder="Project / Practical / Event" required>
+        </div>
+
+        <div class="col-md-12">
+            <label class="form-label small">Notes</label>
+            <textarea name="notes" class="form-control" rows="2" 
+                      placeholder="Additional notes about this transaction"></textarea>
+        </div>
+
+        <div class="col-12 mt-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+                <a href="{{ url_for('transactions') }}" class="btn btn-outline-secondary view-tx-btn">
+                    Back to Transactions
+                </a>
+                <button type="submit" class="btn btn-soft-primary view-tx-btn">
+                    Save Transaction
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    $(document).ready(function () {
+        const preselectedLabId = "{{ preselected_lab_id or '' }}";
+        const preselectedComponentId = "{{ preselected_component_id or '' }}";
+
+        const $labSelect = $('#labSelect');
+        const $componentSelect = $('#componentSelect');
+
+        const allOptions = $componentSelect.find('option').clone();
+
+        function filterComponentsByLab(labId) {
+            const placeholder = allOptions.filter(function () {
+                return $(this).val() === "";
+            }).first().clone();
+
+            $componentSelect.empty().append(placeholder);
+
+            if (!labId) {
+                return;
+            }
+
+            allOptions.each(function () {
+                const opt = $(this);
+                const compLabId = opt.data('lab-id');
+
+                if (!opt.val()) return;
+
+                if (String(compLabId) === String(labId)) {
+                    $componentSelect.append(opt.clone());
+                }
+            });
+
+            if (preselectedComponentId) {
+                $componentSelect.val(preselectedComponentId);
+            }
+        }
+
+        $labSelect.on('change', function () {
+            const selectedLab = $(this).val();
+            filterComponentsByLab(selectedLab);
+        });
+
+        if (preselectedLabId) {
+            $labSelect.val(preselectedLabId);
+            filterComponentsByLab(preselectedLabId);
+        } else {
+            filterComponentsByLab("");
+        }
+    });
+</script>
+{% endblock %}

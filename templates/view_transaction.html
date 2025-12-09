@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}View Transaction{% endblock %}
+{% block page_title %}View Transaction{% endblock %}
+
+{% block extra_head %}
+<style>
+    .detail-grid {
+        row-gap: 0.75rem;
+    }
+    .detail-section-title {
+        font-size: 0.8rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #6b7280;
+        margin-bottom: 0.35rem;
+    }
+    .detail-item-label {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-bottom: 0.1rem;
+    }
+    .detail-item-value {
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+    .detail-item {
+        margin-bottom: 0.4rem;
+    }
+
+    /* Buttons on this page */
+    .view-tx-btn {
+        border-radius: 999px;
+        padding: 0.55rem 1.4rem;
+        font-size: 0.9rem;
+    }
+
+    @media (max-width: 575.98px) {
+        .detail-item-value {
+            font-size: 1rem;
+        }
+        .detail-section-title {
+            font-size: 0.82rem;
+        }
+
+        /* Make the two main buttons more prominent and pill-like on mobile */
+        .view-tx-btn {
+            width: 100%;
+            font-size: 0.95rem;
+            padding: 0.65rem 1.5rem;
+        }
+
+        /* Slightly tighter spacing for cards on mobile */
+        .card-soft {
+            padding-top: 0.85rem;
+            padding-bottom: 0.85rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{# Helper: figure out last return date #}
+{% set last_return_date = None %}
+{% if txn.last_action == 'return' and txn.date %}
+    {% set last_return_date = txn.date %}
+{% endif %}
+
+<div class="card-soft mb-3">
+    <div class="d-flex justify-content-between flex-wrap gap-2">
+        <div>
+            <div class="stat-label mb-1">Transaction Details</div>
+            <div class="small text-muted">
+                Complete information about this issue / return record.
+                Use this view when you need full clarity.
+            </div>
+        </div>
+        <div class="text-end small text-muted">
+            <div>
+                <strong>Component:</strong>
+                {{ component.name if component else 'Unknown' }}
+            </div>
+            <div>
+                <strong>Status:</strong>
+                {{ txn.status or 'Issued' }}
+            </div>
+            <div>
+                <strong>Transaction ID:</strong>
+                {{ txn._id }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- BASIC INFO -->
+<div class="card-soft mb-3">
+    <div class="detail-section-title">Basic Information</div>
+    <div class="row g-3 small detail-grid">
+        <div class="col-6 col-md-4 detail-item">
+            <div class="detail-item-label">Component</div>
+            <div class="detail-item-value">
+                {{ component.name if component else 'Unknown' }}
+                {% if component.component_type %}
+                    <span class="text-muted small">
+                        · {{ component.component_type }}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 detail-item">
+            <div class="detail-item-label">Lab</div>
+            <div class="detail-item-value">
+                {{ lab.name if lab else '-' }}
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 detail-item">
+            <div class="detail-item-label">Campus</div>
+            <div class="detail-item-value">
+                {{ txn.campus or '-' }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PERSON & PURPOSE -->
+<div class="card-soft mb-3">
+    <div class="detail-section-title">Person & Purpose</div>
+    <div class="row g-3 small detail-grid">
+        <div class="col-6 col-md-4 detail-item">
+            <div class="detail-item-label">Issued To</div>
+            <div class="detail-item-value">
+                {{ txn.person_name or '-' }}
+            </div>
+        </div>
+
+        <div class="col-6 col-md-8 detail-item">
+            <div class="detail-item-label">Purpose</div>
+            <div class="detail-item-value">
+                {{ txn.purpose or '-' }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DATES / TIMELINE -->
+<div class="card-soft mb-3">
+    <div class="detail-section-title">Dates & Timeline (IST)</div>
+    <div class="row g-3 small detail-grid">
+        <div class="col-6 col-md-4 detail-item">
+            <div class="detail-item-label">Issued On</div>
+            <div class="detail-item-value">
+                {{ txn.issue_date.strftime('%d %b %Y, %I:%M %p') if txn.issue_date else '-' }}
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 detail-item">
+            <div class="detail-item-label">
+                {% if last_return_date %}
+                    Last Return On
+                {% else %}
+                    Last Action On
+                {% endif %}
+            </div>
+            <div class="detail-item-value">
+                {% if last_return_date %}
+                    {{ last_return_date.strftime('%d %b %Y, %I:%M %p') }}
+                {% elif txn.date %}
+                    {{ txn.date.strftime('%d %b %Y, %I:%M %p') }}
+                {% else %}
+                    -
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 detail-item">
+            <div class="detail-item-label">Last Action Type</div>
+            <div class="detail-item-value">
+                {% if txn.last_action %}
+                    {{ txn.last_action|capitalize }}
+                {% else %}
+                    Issue
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QUANTITIES & STATUS -->
+<div class="card-soft mb-3">
+    <div class="detail-section-title">Quantities & Status</div>
+    <div class="row g-3 small detail-grid">
+        <div class="col-6 col-md-3 detail-item">
+            <div class="detail-item-label">Total Issued</div>
+            <div class="detail-item-value">
+                {{ qty_issued }}
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3 detail-item">
+            <div class="detail-item-label">Total Returned</div>
+            <div class="detail-item-value">
+                {{ qty_returned }}
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3 detail-item">
+            <div class="detail-item-label">Pending to Return</div>
+            <div class="detail-item-value">
+                {% if pending > 0 %}
+                    <span class="badge-status badge-status-out">{{ pending }}</span>
+                {% else %}
+                    <span class="badge-status badge-status-instock">{{ pending }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3 detail-item">
+            <div class="detail-item-label">Current Status</div>
+            <div class="detail-item-value">
+                {{ txn.status or 'Issued' }}
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 detail-item">
+            <div class="detail-item-label">Quantity in Last Action</div>
+            <div class="detail-item-value">
+                {{ txn.transaction_quantity or 0 }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- STOCK MOVEMENT -->
+<div class="card-soft mb-3">
+    <div class="detail-section-title">Stock Movement</div>
+    <div class="row g-3 small detail-grid">
+        <div class="col-6 col-md-4 detail-item">
+            <div class="detail-item-label">Stock Before Last Action</div>
+            <div class="detail-item-value">
+                {{ txn.quantity_before if txn.quantity_before is not none else '-' }}
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 detail-item">
+            <div class="detail-item-label">Stock After Last Action</div>
+            <div class="detail-item-value">
+                {{ txn.quantity_after if txn.quantity_after is not none else '-' }}
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 detail-item">
+            <div class="detail-item-label">Last Action Effect</div>
+            <div class="detail-item-value">
+                {% if txn.last_action == 'issue' %}
+                    Stock reduced by {{ txn.transaction_quantity or 0 }}
+                {% elif txn.last_action == 'return' %}
+                    Stock increased by {{ txn.transaction_quantity or 0 }}
+                {% else %}
+                    -
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- NOTES -->
+<div class="card-soft mb-3">
+    <div class="detail-section-title">Notes</div>
+    <div class="row g-3 small detail-grid">
+        <div class="col-12 detail-item">
+            <div class="detail-item-value">
+                {{ txn.notes or '-' }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ACTIONS -->
+<div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+    <a href="{{ url_for('transactions') }}"
+       class="btn btn-outline-secondary view-tx-btn">
+        Back to Transactions
+    </a>
+    <div class="d-flex gap-2 justify-content-md-end">
+        <a href="{{ url_for('edit_transaction', transaction_id=txn._id) }}"
+           class="btn btn-soft-primary view-tx-btn">
+            Edit / Record Return
+        </a>
+    </div>
+</div>
+{% endblock %}

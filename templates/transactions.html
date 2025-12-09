@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Transactions{% endblock %}
+{% block page_title %}Transactions{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* --- CSS for Side-by-Side Search & Filter --- */
+
+    #statusFilter {
+        min-width: 180px;
+        margin-left: 0.5rem;
+        height: 38px;
+        border-radius: 999px;
+    }
+
+    @media (max-width: 575.98px) {
+        .dataTables_filter {
+            display: flex !important;
+            flex-direction: row !important;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .dataTables_filter label {
+            flex: 1;
+            width: 100%;
+            margin: 0 !important;
+        }
+
+        .dataTables_filter input[type="search"] {
+            width: 100% !important;
+            margin: 0 !important;
+            border-radius: 999px;
+            height: 40px;
+        }
+
+        #statusFilter {
+            flex: 1;
+            width: 100% !important;
+            margin: 0 !important;
+            border-radius: 999px;
+            height: 40px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+    <div>
+        <div class="stat-label mb-1">All Transactions</div>
+        <div class="small text-muted">
+            Issued: {{ status_counts.get('Issued', 0) }} ·
+            Partially Returned: {{ status_counts.get('Partially Returned', 0) }} ·
+            Completed: {{ status_counts.get('Completed', 0) }}
+        </div>
+    </div>
+
+    <div class="d-flex align-items-center gap-2 ms-auto">
+        <a href="{{ url_for('add_transaction') }}" class="btn btn-soft-primary">
+            Add Transaction
+        </a>
+    </div>
+</div>
+
+<div id="statusFilterTemplate" class="d-none">
+    <select id="statusFilter" class="form-select form-select-sm">
+        <option value="">All Statuses</option>
+        <option value="Issued">Issued</option>
+        <option value="Partially Returned">Pending / Partial</option>
+        <option value="Completed">Completed</option>
+    </select>
+</div>
+
+<div class="card-soft">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle" id="transactionsTable">
+            <thead>
+            <tr class="small text-muted">
+                <th class="text-nowrap d-none d-md-table-cell">Issue Date (IST)</th>
+                <th>Component / Summary</th>
+                <th class="d-none d-lg-table-cell">Quantities & Last Action</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for t in transactions %}
+                {% set issued = t.qty_issued or 0 %}
+                {% set returned = t.qty_returned or 0 %}
+                {% set pending = t.pending_qty or (issued - returned) %}
+                <tr>
+                    <td class="text-nowrap small d-none d-md-table-cell">
+                        {% if t.issue_date %}
+                            {{ t.issue_date.strftime('%d %b %Y, %I:%M %p') }}
+                        {% elif t.date %}
+                            {{ t.date.strftime('%d %b %Y, %I:%M %p') }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <div class="fw-semibold">
+                            {{ t.component.name if t.component else 'Unknown component' }}
+                        </div>
+
+                        <div class="d-md-none mt-1">
+                            <div class="small text-muted">
+                                {% if t.issue_date %}
+                                    {{ t.issue_date.strftime('%d %b %Y, %I:%M %p') }}
+                                {% elif t.date %}
+                                    {{ t.date.strftime('%d %b %Y, %I:%M %p') }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </div>
+                            <div class="small text-muted">
+                                Pending: {{ pending }} · Status: {{ t.status or 'Issued' }}
+                            </div>
+                            <div class="small text-muted">
+                                {{ t.person_name or '-' }}
+                                {% if t.campus %}
+                                    · {{ t.campus }}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="small text-muted d-none d-md-block">
+                            Lab: {{ t.lab.name if t.lab else '-' }} · Campus: {{ t.campus or '-' }}
+                        </div>
+                    </td>
+
+                    <td class="small d-none d-lg-table-cell">
+                        <div><strong>Issued:</strong> {{ issued }}</div>
+                        <div class="text-muted">
+                            Returned: {{ returned }} · Pending: {{ pending }}
+                        </div>
+                        <div class="text-muted">
+                            Last: 
+                            {% if t.last_action %}
+                                {{ t.last_action|capitalize }}
+                            {% else %}
+                                Issue
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <td>
+                        {% set st = t.status or 'Issued' %}
+                        {% if st == 'Completed' %}
+                            <span class="badge-status badge-status-instock">
+                                Done / Completed
+                            </span>
+                        {% elif st == 'Partially Returned' %}
+                            <span class="badge-status badge-status-low">
+                                Pending {{ pending }}
+                            </span>
+                        {% else %}
+                            <span class="badge-status badge-status-out">
+                                Issued
+                            </span>
+                        {% endif %}
+                        <span class="d-none status-raw">{{ st }}</span>
+                    </td>
+
+                    <td>
+                        <div class="d-flex flex-wrap gap-1">
+                            <a href="{{ url_for('view_transaction', transaction_id=t.id) }}"
+                               class="action-btn action-btn-secondary">
+                                View
+                            </a>
+                            <a href="{{ url_for('edit_transaction', transaction_id=t.id) }}"
+                               class="action-btn action-btn-primary d-none d-sm-inline-flex">
+                                Edit / Return
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            {% else %}
+                <tr class="text-center small text-muted">
+                    <td>No transactions yet.</td>
+                    <td></td><td></td><td></td><td></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    $(document).ready(function () {
+        const txTable = $('#transactionsTable').DataTable({
+            paging: false,
+            info: false,
+            lengthChange: false,
+            order: [[0, 'desc']]
+        });
+
+        const STATUS_COL = 3;
+
+        const dtWrapper = $('#transactionsTable').closest('.dataTables_wrapper');
+        const dtFilter = dtWrapper.find('.dataTables_filter');
+        const template = $('#statusFilterTemplate');
+
+        if (dtFilter.length && template.length) {
+            const statusSelect = template.find('#statusFilter').detach();
+            dtFilter.append(statusSelect);
+            template.remove();
+        }
+
+        $(document).on('change', '#statusFilter', function () {
+            const status = $(this).val();
+            if (status) {
+                txTable.column(STATUS_COL).search(status, true, false).draw();
+            } else {
+                txTable.column(STATUS_COL).search('', true, false).draw();
+            }
+        });
+    });
+</script>
+{% endblock %}

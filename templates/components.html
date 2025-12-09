@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Components{% endblock %}
+{% block page_title %}Components{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+    <div class="stat-label">
+        {% if selected_lab %}
+            Components – {{ selected_lab.name }}
+        {% else %}
+            All Components
+        {% endif %}
+    </div>
+    <a href="{{ url_for('add_component') }}" class="btn btn-soft-primary">
+        Add Component
+    </a>
+</div>
+
+<div class="card-soft">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle datatable">
+            <thead>
+            <tr class="small text-muted">
+                <th>Name</th>
+                <th class="d-none d-md-table-cell">Category</th>
+                <th class="d-none d-md-table-cell">Lab</th>
+                <th class="d-none d-lg-table-cell">Type</th>
+                <th class="d-none d-md-table-cell">Qty</th>
+                <th class="d-none d-lg-table-cell">Min</th>
+                <th class="d-none d-lg-table-cell">Unit</th>
+                <th class="d-none d-md-table-cell">Status</th>
+                <th class="text-end">Actions</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            {% for c in components %}
+                <tr>
+                    <td>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="fw-semibold">
+                                {{ c.name }}
+                            </div>
+                            <div class="fw-bold small d-md-none">
+                                {{ c.quantity }} {{ c.unit or '' }}
+                            </div>
+                        </div>
+
+                        <div class="d-md-none mt-1 small text-muted">
+                            <div>
+                                {{ c.category.name if c.category else '-' }}
+                                {% if c.lab %}
+                                    · {{ c.lab.name }}
+                                {% endif %}
+                            </div>
+                            <div class="mt-1">
+                                {% if c.stock_state_class == 'instock' %}
+                                    <span class="badge-status badge-status-instock">
+                                        {{ c.status_label }}
+                                    </span>
+                                {% elif c.stock_state_class == 'low' %}
+                                    <span class="badge-status badge-status-low">
+                                        {{ c.status_label }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge-status badge-status-out">
+                                        {{ c.status_label }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+
+                    <td class="d-none d-md-table-cell">{{ c.category.name if c.category }}</td>
+                    <td class="d-none d-md-table-cell">{{ c.lab.name if c.lab }}</td>
+                    <td class="d-none d-lg-table-cell">
+                        <span class="badge-status badge-status-instock">
+                            {{ c.component_type or 'Other' }}
+                        </span>
+                    </td>
+                    <td class="d-none d-md-table-cell">{{ c.quantity }}</td>
+                    <td class="d-none d-lg-table-cell">{{ c.min_stock_level }}</td>
+                    <td class="d-none d-lg-table-cell">{{ c.unit }}</td>
+                    <td class="d-none d-md-table-cell">
+                        <span class="badge-status badge-status-{{ c.stock_state_class }}">
+                            {{ c.status_label }}
+                        </span>
+                    </td>
+
+                    <td class="text-end">
+                        <div class="d-flex justify-content-end flex-wrap gap-1">
+                            <a href="{{ url_for('edit_component', component_id=c.id) }}"
+                               class="action-btn action-btn-secondary mb-1">
+                                Edit
+                            </a>
+                            <form method="post"
+                                  action="{{ url_for('delete_component', component_id=c.id) }}"
+                                  class="d-inline-block mb-1 ms-1"
+                                  onsubmit="return confirm('Delete this component?');">
+                                <button class="btn btn-sm btn-soft-danger" type="submit">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            {% else %}
+                <tr class="text-center small text-muted">
+                    <td>No components yet.</td>
+                    <td></td><td></td><td></td><td></td>
+                    <td></td><td></td><td></td><td></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+</div>
+{% endblock %}

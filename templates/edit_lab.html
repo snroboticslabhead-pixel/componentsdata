@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Lab{% endblock %}
+{% block page_title %}Edit Lab{% endblock %}
+
+{% block content %}
+<div class="card-soft">
+    <form method="post" class="row g-3">
+        <div class="col-md-4 col-12">
+            <label class="form-label small">Lab Name</label>
+            <input
+                type="text"
+                name="name"
+                class="form-control"
+                value="{{ lab.name }}"
+                required
+            >
+        </div>
+
+        <div class="col-md-4 col-12">
+            <label class="form-label small">Location</label>
+            <input
+                type="text"
+                name="location"
+                class="form-control"
+                value="{{ lab.location }}"
+            >
+        </div>
+
+        <div class="col-md-12">
+            <label class="form-label small">Description</label>
+            <input
+                type="text"
+                name="description"
+                class="form-control"
+                value="{{ lab.description }}"
+            >
+        </div>
+
+        <div class="col-12 d-flex flex-column flex-md-row justify-content-between gap-2">
+            <a href="{{ url_for('labs') }}" class="btn btn-outline-secondary w-100 w-md-auto">
+                Cancel
+            </a>
+            <button type="submit" class="btn btn-soft-primary w-100 w-md-auto">
+                Update Lab
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

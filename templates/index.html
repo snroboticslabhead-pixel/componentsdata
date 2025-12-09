@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-3">
+    <div class="col-md-3 col-6">
+        <div class="card-soft h-100">
+            <div class="stat-label mb-1">Total Components</div>
+            <div class="stat-value">{{ stats.total_components }}</div>
+        </div>
+    </div>
+   
+    <div class="col-md-3 col-6">
+        <div class="card-soft h-100 d-flex flex-column justify-content-center">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label mb-1">Pending Returns</div>
+                    <div class="stat-value">{{ stats.pending_returns }}</div>
+                </div>
+                {% if stats.pending_returns > 0 %}
+                <span class="badge-soft-danger">Action</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-6">
+        <div class="card-soft h-100 d-flex flex-column justify-content-center">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label mb-1">Low Stock</div>
+                    <div class="stat-value">{{ stats.low_stock_components }}</div>
+                </div>
+                {% if stats.low_stock_components > 0 %}
+                <span class="badge-soft-danger">Warning</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-6">
+        <div class="card-soft h-100 d-flex flex-column justify-content-center">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label mb-1">Out of Stock</div>
+                    <div class="stat-value">{{ stats.out_of_stock_components }}</div>
+                </div>
+                {% if stats.out_of_stock_components > 0 %}
+                <span class="badge-soft-danger">Critical</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="row g-3 mb-3">
+            <div class="col-sm-4 col-4">
+                <div class="card-soft text-center text-sm-start">
+                    <div class="stat-label mb-1">Labs</div>
+                    <div class="stat-value fs-4">{{ stats.total_labs }}</div>
+                </div>
+            </div>
+            <div class="col-sm-4 col-4">
+                <div class="card-soft text-center text-sm-start">
+                    <div class="stat-label mb-1">Categories</div>
+                    <div class="stat-value fs-4">{{ stats.total_categories }}</div>
+                </div>
+            </div>
+            <div class="col-sm-4 col-4">
+                <div class="card-soft text-center text-sm-start">
+                    <div class="stat-label mb-1">Transactions</div>
+                    <div class="stat-value fs-4">{{ stats.total_transactions }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-soft mb-3">
+            <div class="stat-label mb-2">Lab Overview</div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                    <tr class="small text-muted">
+                        <th>Lab</th>
+                        <th class="text-end">Components</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for lab in stats.lab_stats %}
+                        <tr>
+                            <td>{{ lab.lab_name or "Unassigned" }}</td>
+                            <td class="text-end">{{ lab.component_count }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td class="text-center small text-muted">No data yet.</td>
+                            <td></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card-soft">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="stat-label">Recent Activity</div>
+                <a href="{{ url_for('transactions') }}" class="btn btn-sm btn-soft-primary">View all</a>
+            </div>
+            <div class="list-group list-group-flush small">
+                {% for txn in stats.recent_transactions %}
+                    <div class="py-2 border-bottom">
+                        <div class="d-flex justify-content-between">
+                            <div class="fw-semibold text-capitalize">
+                                {{ txn.last_action or 'issue' }}
+                            </div>
+                            <div class="text-muted" style="font-size: 0.75rem;">
+                                {{ txn.date.strftime('%d %b %H:%M') if txn.date }}
+                            </div>
+                        </div>
+                        <div class="text-muted">
+                            Qty: {{ txn.transaction_quantity }} &middot;
+                            {{ txn.quantity_before }} → {{ txn.quantity_after }}
+                        </div>
+                        {% if txn.person_name %}
+                            <div class="text-muted">By {{ txn.person_name }}</div>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="text-muted small">No transactions yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card-soft mb-3">
+            <div class="stat-label mb-3">Transactions by Status</div>
+            <div style="height: 200px; display: flex; justify-content: center;">
+                <canvas id="transactionsChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card-soft mb-3">
+            <div class="stat-label mb-3">Stock Health</div>
+            <div style="height: 200px; display: flex; justify-content: center;">
+                <canvas id="stockHealthChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card-soft">
+            <div class="stat-label mb-3">Components by Lab</div>
+            <div style="height: 220px; display: flex; justify-content: center;">
+                <canvas id="componentsByLabChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const txTypes = {{ transaction_types|tojson }};
+    const txCounts = {{ transaction_counts|tojson }};
+
+    // Chart 1: Transactions by Status (Pie)
+    if (txTypes.length > 0) {
+        const ctx1 = document.getElementById('transactionsChart').getContext('2d');
+       
+        const colorMap = {
+            'Issued': '#f59e0b',
+            'Completed': '#10b981',
+            'Partially Returned': '#3b82f6',
+            'Unknown': '#9ca3af'
+        };
+
+        const bgColors = txTypes.map(type => colorMap[type] || '#6366f1');
+
+        new Chart(ctx1, {
+            type: 'pie',
+            data: {
+                labels: txTypes,
+                datasets: [{
+                    data: txCounts,
+                    backgroundColor: bgColors,
+                    borderWidth: 1,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15,
+                            font: { size: 11 }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Chart 2: Stock Health (Doughnut)
+    const totalComponents = {{ stats.total_components or 0 }};
+    const lowStock = {{ stats.low_stock_components or 0 }};
+    const outOfStock = {{ stats.out_of_stock_components or 0 }};
+    const healthyStock = Math.max(totalComponents - lowStock - outOfStock, 0);
+
+    if (totalComponents > 0) {
+        const ctx2 = document.getElementById('stockHealthChart').getContext('2d');
+
+        new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: ['Healthy', 'Low Stock', 'Out of Stock'],
+                datasets: [{
+                    data: [healthyStock, lowStock, outOfStock],
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                    borderWidth: 1,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '55%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15,
+                            font: { size: 11 }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Chart 3: Components by Lab (Bar)
+    const labStats = {{ stats.lab_stats|tojson }};
+    if (labStats && labStats.length > 0) {
+        const labels = labStats.map(l => l.lab_name || 'Unassigned');
+        const counts = labStats.map(l => l.component_count);
+
+        const ctx3 = document.getElementById('componentsByLabChart').getContext('2d');
+        new Chart(ctx3, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Components',
+                    data: counts,
+                    backgroundColor: '#3b82f6',
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        ticks: { font: { size: 10 } },
+                        grid: { display: false }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, font: { size: 10 } },
+                        grid: { color: '#e5e7eb' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

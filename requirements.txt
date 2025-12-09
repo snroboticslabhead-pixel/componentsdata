@@ -1,0 +1,9 @@
+Flask==3.0.2
+Flask-PyMongo==2.3.0
+python-dotenv==1.0.0
+pymongo==4.6.1
+chart.js==0.1.0
+Flask-Cors==4.0.0
+pandas==2.1.4
+openpyxl==3.1.2
+reportlab==4.0.8
